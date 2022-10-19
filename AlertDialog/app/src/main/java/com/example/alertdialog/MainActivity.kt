@@ -1,11 +1,12 @@
 package com.example.alertdialog
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import android.content.DialogInterface
 import androidx.appcompat.app.AppCompatActivity
 import com.example.alertdialog.databinding.ActivityMainBinding
+import com.example.alertdialog.databinding.AlertdialogEdittextBinding
 
 class MainActivity : AppCompatActivity() {
 
@@ -86,6 +87,21 @@ class MainActivity : AppCompatActivity() {
                 .show()
         }
 
+        binding.btnEditTextAlertDialog.setOnClickListener {
+            val builder = AlertDialog.Builder(this)
+            val builderItem = AlertdialogEdittextBinding.inflate(layoutInflater)
+            val editText = builderItem.editText
+
+            with(builder){
+                setTitle("Input Name")
+                setMessage("이름을 입력 하세요")
+                setView(builderItem.root)
+                setPositiveButton("OK"){ dialogInterface: DialogInterface, i: Int ->
+                    if(editText.text != null) toast("입력된 이름 : ${editText.text}")
+                }
+                show()
+            }
+        }
     }
 
 
