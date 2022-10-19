@@ -6,13 +6,60 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
+
+    <Button
+        android:id="@+id/btnBasicAlertDialog"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="8dp"
+        android:text="Basic AlertDialog"
+        android:textAllCaps="false"
+
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnItemAlertDialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:text="List AlertDialog"
+        android:textAllCaps="false"
+        app:layout_constraintTop_toBottomOf="@+id/btnBasicAlertDialog"
+        tools:layout_editor_absoluteX="8dp" />
+
+    <Button
+        android:id="@+id/btnRadioAlertDialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:layout_marginTop="320dp"
+        android:text="Radio AlertDialog"
+        android:textAllCaps="false"
+        app:layout_constraintTop_toBottomOf="@+id/btnItemAlertDialog"
+        tools:layout_editor_absoluteX="8dp" />
+
+    <Button
+        android:id="@+id/btnCheckBoxAlertDialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:layout_marginTop="320dp"
+        android:text="CheckBox AlertDialog"
+        android:textAllCaps="false"
+        app:layout_constraintTop_toBottomOf="@+id/btnRadioAlertDialog"
+        tools:layout_editor_absoluteX="8dp" />
+
+    <Button
+        android:id="@+id/btnEditTextAlertDialog"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:layout_marginTop="320dp"
+        android:text="EditText AlertDialog"
+        android:textAllCaps="false"
+        app:layout_constraintTop_toBottomOf="@+id/btnCheckBoxAlertDialog"
+        tools:layout_editor_absoluteX="8dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
