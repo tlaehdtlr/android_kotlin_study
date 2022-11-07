@@ -1,14 +1,10 @@
 ## For study android development
 
-
-
 ### Requirements
 
 - Android studio
 
 - Kotlin
-
-
 
 ### Description of projects
 
@@ -23,5 +19,9 @@
 - TrasnmitDataToAct
 
   - Transmit data to another activity
+- AlertDialog
+  - Several input method
+- Fragment
+  - Fragment adding, changing, deleting
 
 
