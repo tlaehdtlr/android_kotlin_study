@@ -34,15 +34,21 @@ class MainActivity : AppCompatActivity() {
         val transaction = supportFragmentManager.beginTransaction()
         when(frag_state){
             0 -> {
-                transaction.add(R.id.frameLayout, FragA())
+                val fragA = FragA()
+                transaction.add(R.id.frameLayout, fragA)
                 frag_state = 1
             }
             1 -> {
-                transaction.replace(R.id.frameLayout, FragB())
+                val fragB = FragB()
+                transaction.replace(R.id.frameLayout, fragB)
                 frag_state = 2
             }
             2 -> {
-                transaction.replace(R.id.frameLayout, FragA())
+                val fragA = FragA()
+                val bundle = Bundle()
+                bundle.putString("key", "From Main to Frag A")
+                fragA.arguments = bundle
+                transaction.replace(R.id.frameLayout, fragA)
                 frag_state = 1
             }
         }
