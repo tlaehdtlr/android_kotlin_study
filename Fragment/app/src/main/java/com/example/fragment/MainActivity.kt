@@ -6,14 +6,19 @@ import com.example.fragment.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
-    lateinit var binding : ActivityMainBinding
+    private lateinit var binding : ActivityMainBinding
 
     /**
      * 0 - idle
      * 1 - frag A
      * 2 - frag B
      */
-    var frag_state = 0
+    private var fragState = 0
+
+
+    private val fragA = FragA()
+    private val fragB = FragB()
+    private val fragC = FragC()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,35 +26,33 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.btnSwitch.setOnClickListener() {
+        binding.btnSwitch.setOnClickListener {
             switchFragment()
         }
 
-        binding.btnRemove.setOnClickListener() {
+        binding.btnRemove.setOnClickListener {
             removeFragment()
         }
     }
 
     private fun switchFragment() {
         val transaction = supportFragmentManager.beginTransaction()
-        when(frag_state){
+
+        when(fragState){
             0 -> {
-                val fragA = FragA()
-                transaction.add(R.id.frameLayout, fragA)
-                frag_state = 1
+                transaction.add(R.id.frameLayoutA, fragA)
+                fragState = 1
             }
             1 -> {
-                val fragB = FragB()
-                transaction.replace(R.id.frameLayout, fragB)
-                frag_state = 2
+                transaction.replace(R.id.frameLayoutA, fragB)
+                fragState = 2
             }
             2 -> {
-                val fragA = FragA()
                 val bundle = Bundle()
                 bundle.putString("key", "From Main to Frag A")
                 fragA.arguments = bundle
-                transaction.replace(R.id.frameLayout, fragA)
-                frag_state = 1
+                transaction.replace(R.id.frameLayoutA, fragA)
+                fragState = 1
             }
         }
         transaction.addToBackStack(null)
@@ -58,8 +61,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun removeFragment() {
         val transaction = supportFragmentManager.beginTransaction()
-        val frameLayout = supportFragmentManager.findFragmentById(R.id.frameLayout)
+        val frameLayout = supportFragmentManager.findFragmentById(R.id.frameLayoutA)
         transaction.remove(frameLayout!!)
         transaction.commit()
     }
+
+    fun openFragmentOnFrameLayoutB(int: Int){
+        val transaction = supportFragmentManager.beginTransaction()
+        val frameLayout = supportFragmentManager.findFragmentById(R.id.frameLayoutB)
+
+        when(int){
+            1 -> transaction.add(R.id.frameLayoutB, fragC)
+            2 -> transaction.remove(frameLayout!!)
+        }
+        transaction.commit()
+    }
+
+    fun changeReqFromFragA(inputString: String){
+        fragC.changeText(inputString)
+    }
+
 }

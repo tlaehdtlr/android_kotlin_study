@@ -1,10 +1,13 @@
 package com.example.fragment
 
+import android.content.Context
+import android.content.DialogInterface
 import android.os.Bundle
 //import android.support.v4.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import com.example.fragment.databinding.FragmentFragABinding
 
@@ -23,6 +26,14 @@ class FragA : Fragment() {
     private var _binding:FragmentFragABinding?=null
     private val binding get()= _binding!!
 
+    var mainActivity:MainActivity?=null
+    private var flag = 0
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        mainActivity = context as MainActivity
+    }
+
 //    override fun onCreate(savedInstanceState: Bundle?) {
 //        super.onCreate(savedInstanceState)
 //        arguments?.let {
@@ -39,6 +50,33 @@ class FragA : Fragment() {
         _binding = FragmentFragABinding.inflate(inflater, container, false)
         binding.textView.text=arguments?.getString("key")?:"This is Frag A"
 //        return inflater.inflate(R.layout.fragment_frag_a, container, false)
+
+        binding.btnShowFragmentC.setOnClickListener{
+            if (flag==0) {
+                mainActivity!!.openFragmentOnFrameLayoutB(1)
+                flag=1
+            }
+            else {
+                mainActivity!!.openFragmentOnFrameLayoutB(2)
+                flag=0
+            }
+        }
+
+
+        binding.btnChangeTextFragmentC.setOnClickListener{
+            val items=arrayOf("Hi from Frag A", "what's going on?")
+            var selectedItem = "default"
+            var builder=AlertDialog.Builder(mainActivity!!)
+                .setTitle("Select Sentence")
+                .setSingleChoiceItems(items,-1){ dialogInterface: DialogInterface, i:Int ->
+                    selectedItem = items[i]
+                }
+                .setPositiveButton("Select"){dialogInterface:DialogInterface, i:Int ->
+                    mainActivity!!.changeReqFromFragA(selectedItem)
+                }
+            builder.show()
+        }
+
         return binding.root
     }
 
