@@ -19,9 +19,14 @@
 - TrasnmitDataToAct
 
   - Transmit data to another activity
+
 - AlertDialog
+
   - Several input method
+
 - Fragment
+
   - Fragment adding, changing, deleting
-
-
+  - Transmission between activity-fragment and each fragments
+- RecyclerView
+  - List
