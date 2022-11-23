@@ -24,6 +24,7 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.InputMethodManager
@@ -41,6 +42,7 @@ import com.example.myble.ble.isWritable
 import com.example.myble.ble.isWritableWithoutResponse
 import com.example.myble.ble.toHexString
 import com.example.myble.databinding.ActivityBleOperationsBinding
+import com.example.myble.databinding.EdittextHexPayloadBinding
 //import org.jetbrains.anko.alert
 //import org.jetbrains.anko.noButton
 //import org.jetbrains.anko.selector
@@ -54,6 +56,7 @@ class BleOperationsActivity : AppCompatActivity() {
 
     private lateinit var device: BluetoothDevice
     private lateinit var binding : ActivityBleOperationsBinding
+    private lateinit var hexField : EdittextHexPayloadBinding
 
     private val dateFormatter = SimpleDateFormat("MMM d, HH:mm:ss", Locale.US)
     private val characteristics by lazy {
@@ -162,10 +165,6 @@ class BleOperationsActivity : AppCompatActivity() {
         characteristicProperties[characteristic]?.let { properties ->
             println("*********************")
             println(properties)
-
-
-            """
-            .trimIndent()
             selector("Select an action to perform", properties.map { it.action }) { _, i ->
                 when (properties[i]) {
                     CharacteristicProperty.Readable -> {
@@ -186,7 +185,6 @@ class BleOperationsActivity : AppCompatActivity() {
                     }
                 }
             }
-            """
         }
     }
 
@@ -213,13 +211,13 @@ class BleOperationsActivity : AppCompatActivity() {
 
     @SuppressLint("InflateParams")
     private fun showWritePayloadDialog(characteristic: BluetoothGattCharacteristic) {
-        val hexField = layoutInflater.inflate(R.layout.edittext_hex_payload, null) as EditText
-
+//        hexField = EdittextHexPayloadBinding.inflate(layoutInflater, null, false)
+        hexField = EdittextHexPayloadBinding.inflate(layoutInflater)
         val builder = AlertDialog.Builder(this)
-            .setCustomTitle(hexField)
+            .setTitle("Write payload")
             .setCancelable(false)
-            .setPositiveButton(android.R.string.yes, { d:DialogInterface, i:Int ->
-                with(hexField.text.toString()) {
+            .setPositiveButton("Write") { _, _ ->
+                with(hexField.writePayload.text.toString()) {
                     if (isNotBlank() && isNotEmpty()) {
                         val bytes = hexToBytes()
                         log("Writing to ${characteristic.uuid}: ${bytes.toHexString()}")
@@ -228,29 +226,12 @@ class BleOperationsActivity : AppCompatActivity() {
                         log("Please enter a hex payload to write to ${characteristic.uuid}")
                     }
                 }
-            })
-            .setNegativeButton(android.R.string.no, {  d:DialogInterface, i:Int ->
-                println(1111)
-            })
-            .show()
-        hexField.showKeyboard()
-//        alert {
-//            customView = hexField
-//            isCancelable = false
-//            yesButton {
-//                with(hexField.text.toString()) {
-//                    if (isNotBlank() && isNotEmpty()) {
-//                        val bytes = hexToBytes()
-//                        log("Writing to ${characteristic.uuid}: ${bytes.toHexString()}")
-//                        ConnectionManager.writeCharacteristic(device, characteristic, bytes)
-//                    } else {
-//                        log("Please enter a hex payload to write to ${characteristic.uuid}")
-//                    }
-//                }
-//            }
-//            noButton {}
-//        }.show()
-//        hexField.showKeyboard()
+            }
+            .setNegativeButton("cancel") { _ , _ -> println(1111)}
+            .setView(hexField.root)
+//            .show()
+        hexField.writePayload.showKeyboard()
+        builder.show()
     }
 
     private val connectionEventListener by lazy {

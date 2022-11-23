@@ -40,9 +40,6 @@ class CharacteristicAdapter(
         val binding = RowCharacteristicBinding.inflate(LayoutInflater.from(parent.context), parent, false)
 //        val view = binding.root
 
-        binding.notificationBtn.setOnClickListener{
-            // todo
-        }
         return ViewHolder(binding, onClickListener)
     }
 
@@ -66,10 +63,6 @@ class CharacteristicAdapter(
             binding.characteristicUuid.text = characteristic.uuid.toString()
             binding.characteristicProperties.text = characteristic.printProperties()
             binding.root.setOnClickListener { onClickListener.invoke(characteristic) }
-            when
-            if (binding.characteristicProperties.text.contains("NOTIFIABLE")) {
-                binding.notificationBtn.visibility = View.VISIBLE
-            }
         }
     }
 }
