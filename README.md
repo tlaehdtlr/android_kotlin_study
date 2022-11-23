@@ -30,3 +30,9 @@
   - Transmission between activity-fragment and each fragments
 - RecyclerView
   - List
+- MyBLE
+  - Certification
+  - Scan
+  - Connection
+  - Characteristic properties
+

@@ -14,6 +14,8 @@ class MainActivity : AppCompatActivity() {
 
     val positiveButtonClick = { dialoginterface : DialogInterface, i: Int ->
         toast("Positive")
+        println(dialoginterface)
+        println(i)
     }
 
     val negativeButtonClick = { dialoginterface : DialogInterface, i: Int ->
@@ -34,7 +36,7 @@ class MainActivity : AppCompatActivity() {
             val builder = AlertDialog.Builder(this)
                 .setTitle("Title")
                 .setMessage("Messaage")
-                .setPositiveButton("Positive", positiveButtonClick)
+                .setPositiveButton("Positive", {d:DialogInterface, i:Int -> println(123)})
                 .setNegativeButton("Negative", negativeButtonClick)
                 .setNeutralButton("Neutral", neutralButtonClick)
                 .show()

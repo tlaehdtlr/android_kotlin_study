@@ -6,13 +6,54 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
+    <EditText
+        android:id="@+id/scan_device_name"
+        android:layout_width="130dp"
+        android:layout_height="50dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="16dp"
+        android:textSize="15sp"
+        android:text=""
+        android:hint="Device Name"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:textColor="@color/cardview_shadow_start_color"
+        />
+
+    <Button
+        android:id="@+id/scan_button"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
+        android:layout_height="50dp"
+        android:layout_marginStart="30dp"
+        android:text="Start Scan"
+        app:layout_constraintStart_toEndOf="@id/scan_device_name"
+        app:layout_constraintTop_toTopOf="@id/scan_device_name"
+        />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/scan_results_recycler_view"
+        android:layout_width="300dp"
+        android:layout_height="500dp"
+        android:layout_marginTop="10dp"
+        android:scrollbarFadeDuration="0"
+        android:scrollbars="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/scan_button"
+        app:layout_constraintVertical_bias="0.0"
+        tools:listitem="@layout/row_scan_result" />
+
+    <Button
+        android:id="@+id/exit_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="15dp"
+        android:text="Exit"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
