@@ -26,6 +26,7 @@ import androidx.recyclerview.widget.SimpleItemAnimator
 import com.example.myble.ble.ConnectionManager
 import com.example.myble.ble.ConnectionEventListener
 import com.example.myble.databinding.ActivityMainBinding
+import com.example.myble.databinding.FragmentBleOperationBinding
 
 private const val ENABLE_BLUETOOTH_REQUEST_CODE = 1
 private const val LOCATION_PERMISSION_REQUEST_CODE = 2
@@ -34,6 +35,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding : ActivityMainBinding
 //    private lateinit var getResult: ActivityResultLauncher<Intent>
+
+    private val fragBleOperation = BleOperationFrag()
 
     /*******************************************
      * Properties
@@ -278,17 +281,34 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun removeBleOperationLayout() {
+        val transaction = supportFragmentManager.beginTransaction()
+//        val frameLayout = supportFragmentManager.findFragmentById(R.id.frameBleOperation)
+//        transaction.remove(frameLayout!!)
+        transaction.remove(fragBleOperation)
+        transaction.commit()
+        ConnectionManager.registerListener(connectionEventListener)
+    }
+
     private val connectionEventListener by lazy {
         ConnectionEventListener().apply {
             onConnectionSetupComplete = { gatt ->
                 println("connectionEventListener : onConnectionSetupComplete ")
-//                val intent = Intent(this@MainActivity, BleOperationsActivity::class.java)
-//                intent.putExtra(BluetoothDevice.EXTRA_DEVICE, gatt.device)
-//                startActivity(intent)
-                 Intent(this@MainActivity, BleOperationsActivity::class.java).also {
-                     it.putExtra(BluetoothDevice.EXTRA_DEVICE, gatt.device)
-                     startActivity(it)
-                 }
+//                 Intent(this@MainActivity, BleOperationsActivity::class.java).also {
+//                     it.putExtra(BluetoothDevice.EXTRA_DEVICE, gatt.device)
+//                     startActivity(it)
+//                 }
+
+                val bundle = Bundle()
+                bundle.putParcelable(BluetoothDevice.EXTRA_DEVICE, gatt.device)
+                fragBleOperation.arguments = bundle
+
+                val transaction = supportFragmentManager.beginTransaction()
+                transaction.add(R.id.frameBleOperation, fragBleOperation)
+
+                transaction.addToBackStack(null)
+                transaction.commit()
+
                 ConnectionManager.unregisterListener(this)
             }
             onDisconnect = {
