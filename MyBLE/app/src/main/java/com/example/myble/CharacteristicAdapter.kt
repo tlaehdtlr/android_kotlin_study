@@ -22,7 +22,7 @@ import android.view.View
 //import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.myble.ble.printProperties
+import com.example.myble.ble.*
 import com.example.myble.databinding.RowCharacteristicBinding
 
 
@@ -51,16 +51,41 @@ class CharacteristicAdapter(
     }
 
     class ViewHolder(
-//        private val view: View,
+    //    private val view: View,
         val binding: RowCharacteristicBinding,
         private val onClickListener: ((characteristic: BluetoothGattCharacteristic) -> Unit)
     ) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(characteristic: BluetoothGattCharacteristic) {
-//            view.characteristic_uuid.text = characteristic.uuid.toString()
-//            view.characteristic_properties.text = characteristic.printProperties()
-//            view.setOnClickListener { onClickListener.invoke(characteristic) }
-            binding.characteristicUuid.text = characteristic.uuid.toString()
+            val Uuid =  characteristic.uuid.toString().uppercase()
+            binding.characteristicUuid.text = Uuid
+
+            val listUuid = Uuid.split("-")
+            var BaseUuid = listUuid[0].substring(0,4) + "XXXX"
+            for (idx in 1 until listUuid.size) {
+                BaseUuid += listUuid[idx]
+            }
+
+            val CharUuid = listUuid[0].substring(4)
+            when (BaseUuid){
+                BASE_BASIC ->{
+                    when (CharUuid) {
+                        BASIC_CHAR_DEVICE_NAME -> {binding.characteristicUuid.text = "DEVICE NAME"}
+                        BASIC_CHAR_APPEARANCE -> {binding.characteristicUuid.text = "APPEARANCE"}
+                        BASIC_CHAR_PERIPHERAL_PREFERRED_CONNECTION_PARAMETERS -> {binding.characteristicUuid.text = "PERIPHERAL PREFERRED CONNECTION PARAMETERS"}
+                        BASIC_CHAR_CENTRAL_ADDRESS_RESOLUTION -> {binding.characteristicUuid.text = "CENTRAL ADDRESS RESOLUTION"}
+                        BASIC_CHAR_MANUFACTURER_NAME_STRING -> {binding.characteristicUuid.text = "MANUFACTURER NAME STRING"}
+                        BASIC_CHAR_SOFTWARE_REVISION_STRING -> {binding.characteristicUuid.text = "SOFTWARE REVISION STRING"}
+                        BASIC_CHAR_NORDIC_BUTTONLESS_DFU -> {binding.characteristicUuid.text = "NORDIC BUTTONLESS DFU"}
+                        else -> {binding.characteristicUuid.text = "Unregistered BASIC CHAR " + Uuid}
+                    }
+                }
+                else -> {
+                    println("Custom characteristic")
+                }
+            }
+
+
             binding.characteristicProperties.text = characteristic.printProperties()
             binding.root.setOnClickListener { onClickListener.invoke(characteristic) }
         }

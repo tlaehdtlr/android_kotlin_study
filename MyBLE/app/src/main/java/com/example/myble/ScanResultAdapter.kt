@@ -18,7 +18,6 @@ class ScanResultAdapter (
 //            parent,
 //            false
 //        )
-        println("ScanResultAdapter : onCreateViewHolder")
         val binding = RowScanResultBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding, onClickListener)
     }

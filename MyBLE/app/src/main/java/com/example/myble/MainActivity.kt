@@ -30,10 +30,13 @@ import com.example.myble.databinding.FragmentBleOperationBinding
 
 private const val ENABLE_BLUETOOTH_REQUEST_CODE = 1
 private const val LOCATION_PERMISSION_REQUEST_CODE = 2
+private const val BLE_SCAN_PERMISSION_REQUEST_CODE = 3
+private const val BLE_CONNECT_PERMISSION_REQUEST_CODE = 4
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding : ActivityMainBinding
+
 //    private lateinit var getResult: ActivityResultLauncher<Intent>
 
     private val fragBleOperation = BleOperationFrag()
@@ -96,11 +99,10 @@ class MainActivity : AppCompatActivity() {
             setupRecyclerView()
         }
 
-        binding.exitBtn.setOnClickListener{
-            println("Finish app")
-            finish()
-        }
-
+//        binding.exitBtn.setOnClickListener{
+//            println("Finish app")
+//            finish()
+//        }
     }
 
     override fun onResume() {
@@ -132,14 +134,31 @@ class MainActivity : AppCompatActivity() {
         when (requestCode) {
             LOCATION_PERMISSION_REQUEST_CODE -> {
                 if (grantResults.firstOrNull() == PackageManager.PERMISSION_DENIED) {
-                    requestLocationPermission()
-                } else {
-                    startBleScan()
+                    println("onRequestPermissionsResult : LOCATION_PERMISSION_REQUEST_CODE")
+                }
+                else {
+                    startBleScan() // last permission
+                }
+            }
+            BLE_SCAN_PERMISSION_REQUEST_CODE -> {
+                if (grantResults.firstOrNull() == PackageManager.PERMISSION_DENIED) {
+                    println("onRequestPermissionsResult : BLE_SCAN_PERMISSION_REQUEST_CODE")
+                }
+            }
+
+            BLE_CONNECT_PERMISSION_REQUEST_CODE -> {
+                if (grantResults.firstOrNull() == PackageManager.PERMISSION_DENIED) {
+                    println("onRequestPermissionsResult : BLE_CONNECT_PERMISSION_REQUEST_CODE")
                 }
             }
         }
     }
 
+//     override fun onBackPressed() {
+// //        println("onBackPressed, ${binding.navigation.findNavCont}")
+//         println("onBackPressed")
+//         super.onBackPressed()
+//     }
     /*******************************************
      * Private functions
      *******************************************/
@@ -161,68 +180,97 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startBleScan() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !isLocationPermissionGranted) {
-            requestLocationPermission()
-        } else {
-            scanResults.clear()
-            scanResultAdapter.notifyDataSetChanged()
-            bleScanner.startScan(null, scanSettings, scanCallback)
-            isScanning = true
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BLUETOOTH_SCAN
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestBlePermissions()
+            return
         }
+
+        scanResults.clear()
+        scanResultAdapter.notifyDataSetChanged()
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BLUETOOTH_SCAN
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            println("Permission required")
+            return
+        }
+        bleScanner.startScan(null, scanSettings, scanCallback)
+        isScanning = true
     }
 
     private fun stopBleScan() {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.BLUETOOTH_SCAN
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            println("Permission required")
+            return
+        }
         bleScanner.stopScan(scanCallback)
         isScanning = false
     }
 
-    private fun requestLocationPermission() {
-        if (isLocationPermissionGranted) {
-            return
-        }
+    private fun requestBlePermissions() {
         runOnUiThread {
-            val builder = AlertDialog.Builder(this)
-                .setTitle("Location permission required")
-                .setMessage("Starting from Android M (6.0), the system requires apps to be granted" +
-                        "location access in order to scan for BLE devices.")
-                .setCancelable(false)
-//                .setPositiveButton(android.R.string.ok, locationPermissionReqPositive)
-                .setPositiveButton(android.R.string.ok) {_, i ->
-                    println("===================================")
-                    println("locationPermissionReqPositive")
-//                    requestPermission(Manifest.permission.BLUETOOTH_SCAN, 2)
-//                    requestPermission(Manifest.permission.BLUETOOTH_CONNECT, 3)
-                    requestPermission(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
-                        LOCATION_PERMISSION_REQUEST_CODE
-                    )
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                if (this.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    println("ACCESS_FINE_LOCATION permission")
+                    val builder = AlertDialog.Builder(this@MainActivity)
+                    builder.setTitle("Permission required")
+                        .setMessage("Location permission.")
+                        .setCancelable(false)
+                        .setPositiveButton("OK") {_, _ ->
+                            requestPermission(Manifest.permission.ACCESS_FINE_LOCATION, LOCATION_PERMISSION_REQUEST_CODE)
+                        }
+                        .show()
                 }
-                .show()
+            }
 
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val builder = AlertDialog.Builder(this@MainActivity)
+                if (this.checkSelfPermission(Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                    println("BLUETOOTH_SCAN permission")
+                    builder.setTitle("Permission required")
+                        .setMessage("BLE scan permission.")
+                        .setCancelable(false)
+                        .setPositiveButton("OK") {_, _ ->
+                            requestPermission(Manifest.permission.BLUETOOTH_SCAN, BLE_SCAN_PERMISSION_REQUEST_CODE)
+                        }
+                        .show()
+                }
 
-
-//            alert {
-//                title = "Location permission required"
-//                message = "Starting from Android M (6.0), the system requires apps to be granted " +
-//                        "location access in order to scan for BLE devices."
-//                isCancelable = false
-//                positiveButton(android.R.string.ok) {
-//                    requestPermission(
-//                        Manifest.permission.ACCESS_FINE_LOCATION,
-//                        LOCATION_PERMISSION_REQUEST_CODE
-//                    )
-//                }
-//            }.show()
+                if (this.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    println("BLUETOOTH_CONNECT permission")
+                    builder.setTitle("Permission required")
+                        .setMessage("BLE connect permission.")
+                        .setCancelable(false)
+                        .setPositiveButton("OK") {_, _ ->
+                            requestPermission(Manifest.permission.BLUETOOTH_CONNECT, BLE_CONNECT_PERMISSION_REQUEST_CODE)
+                        }
+                        .show()
+                }
+            }
         }
-    }
-
-    val locationPermissionReqPositive = { dialoginterface: DialogInterface, i: Int ->
-        println("===================================")
-        println("locationPermissionReqPositive")
-        requestPermission(
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            LOCATION_PERMISSION_REQUEST_CODE
-        )
     }
 
     private fun setupRecyclerView() {
@@ -249,9 +297,6 @@ class MainActivity : AppCompatActivity() {
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             val indexQuery = scanResults.indexOfFirst { it.device.address == result.device.address }
-//            println("======================================")
-//            println(scanResults)
-//            println(indexQuery)
 
             if (indexQuery != -1) { // A scan result already exists with the same address
                 scanResults[indexQuery] = result
@@ -266,11 +311,14 @@ class MainActivity : AppCompatActivity() {
                     scanResultAdapter.notifyItemInserted(scanResults.size - 1)
                 } else {
                     if (isLocationPermissionGranted && result.device.name != null) {
+//                    if (result.device.name != null) {
                         if (result.device.name.contains(binding.scanDeviceName.text, ignoreCase = true))
                         {
                             scanResults.add(result)
                             scanResultAdapter.notifyItemInserted(scanResults.size - 1)
                         }
+                    } else {
+//                        println("isLocationPermissionGranted : $isLocationPermissionGranted")
                     }
                 }
             }
@@ -306,7 +354,7 @@ class MainActivity : AppCompatActivity() {
                 val transaction = supportFragmentManager.beginTransaction()
                 transaction.add(R.id.frameBleOperation, fragBleOperation)
 
-                transaction.addToBackStack(null)
+//                transaction.addToBackStack(null)
                 transaction.commit()
 
                 ConnectionManager.unregisterListener(this)

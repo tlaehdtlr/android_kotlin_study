@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattService
 import android.content.Context
 import android.content.DialogInterface
 import android.os.Bundle
@@ -53,12 +55,13 @@ class BleOperationFrag : Fragment() {
 
     private var notifyingCharacteristics = mutableListOf<UUID>()
 
+    private var services :List<BluetoothGattService> ?= listOf()
+
+    private var serviceAdapter: ServiceAdapter ?= null
 
     private var characteristics :List<BluetoothGattCharacteristic> ?= listOf()
 
     private var characteristicProperties: Map<BluetoothGattCharacteristic, List<BleOperationFrag.CharacteristicProperty>> ?= mapOf()
-
-    private var characteristicAdapter: CharacteristicAdapter ?= null
 
 
     override fun onAttach(context: Context) {
@@ -70,8 +73,6 @@ class BleOperationFrag : Fragment() {
         super.onCreate(savedInstanceState)
         arguments?.let {
             device = it.getParcelable(BluetoothDevice.EXTRA_DEVICE)
-            println("onCreate")
-            println(it)
 //            _device = it.getString(ARG_PARAM1)
 //             param1 = it.getString(ARG_PARAM1)
 //             param2 = it.getString(ARG_PARAM2)
@@ -92,6 +93,7 @@ class BleOperationFrag : Fragment() {
         characteristics = ConnectionManager.servicesOnDevice(device!!)?.flatMap { service ->
             service.characteristics ?: listOf()
         }
+        binding.connectedDeviceName.text = device!!.name
 
         characteristicProperties = characteristics!!.map { characteristic ->
             characteristic to mutableListOf<CharacteristicProperty>().apply {
@@ -104,23 +106,24 @@ class BleOperationFrag : Fragment() {
                 }
             }.toList()
         }.toMap()
+        services = ConnectionManager.servicesOnDevice(device!!)
+        serviceAdapter = ServiceAdapter(services!!, ({service->println("services on click ${service}")}), ({characteristic->showCharacteristicOptions(characteristic)}))
+        setupServices()
 
-        characteristicAdapter = CharacteristicAdapter(characteristics!!) { characteristic ->
-            showCharacteristicOptions(characteristic)
-        }
 
-        setupRecyclerView()
-        binding.requestMtuButton.setOnClickListener {
-            if (binding.mtuField.text.isNotEmpty() && binding.mtuField.text.isNotBlank()) {
-                binding.mtuField.text.toString().toIntOrNull()?.let { mtu ->
-                    log("Requesting for MTU value of $mtu")
-                    ConnectionManager.requestMtu(device!!, mtu)
-                } ?: log("Invalid MTU value: ${binding.mtuField.text}")
-            } else {
-                log("Please specify a numeric value for desired ATT MTU (23-517)")
-            }
-            mainActivity!!.hideKeyboard()
-        }
+
+//        binding.requestMtuButton.setOnClickListener {
+//            if (binding.mtuField.text.isNotEmpty() && binding.mtuField.text.isNotBlank()) {
+//                binding.mtuField.text.toString().toIntOrNull()?.let { mtu ->
+//                    log("Requesting for MTU value of $mtu")
+//                    ConnectionManager.requestMtu(device!!, mtu)
+//                } ?: log("Invalid MTU value: ${binding.mtuField.text}")
+//            } else {
+//                log("Please specify a numeric value for desired ATT MTU (23-517)")
+//            }
+//            mainActivity!!.hideKeyboard()
+//        }
+
 
         binding.disconnectionBtn.setOnClickListener {
             mainActivity!!.removeBleOperationLayout()
@@ -138,10 +141,9 @@ class BleOperationFrag : Fragment() {
         _binding = null
     }
 
-
-    private fun setupRecyclerView() {
-        binding.characteristicsRecyclerView.apply {
-            adapter = characteristicAdapter
+    private fun setupServices() {
+        binding.servicesRecyclerView.apply {
+            adapter = serviceAdapter
             layoutManager = LinearLayoutManager(
                 mainActivity,
                 RecyclerView.VERTICAL,
@@ -150,7 +152,7 @@ class BleOperationFrag : Fragment() {
             isNestedScrollingEnabled = false
         }
 
-        val animator = binding.characteristicsRecyclerView.itemAnimator
+        val animator = binding.servicesRecyclerView.itemAnimator
         if (animator is SimpleItemAnimator) {
             animator.supportsChangeAnimations = false
         }
