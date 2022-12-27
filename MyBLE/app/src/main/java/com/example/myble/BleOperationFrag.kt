@@ -2,13 +2,17 @@ package com.example.myble
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.Activity.RESULT_OK
 import android.app.AlertDialog
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
+import android.content.ContentResolver
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -24,6 +28,9 @@ import androidx.recyclerview.widget.SimpleItemAnimator
 import com.example.myble.ble.*
 import com.example.myble.databinding.EdittextHexPayloadBinding
 import com.example.myble.databinding.FragmentBleOperationBinding
+import java.io.File
+import java.io.InputStream
+import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -63,6 +70,9 @@ class BleOperationFrag : Fragment() {
 
     private var characteristicProperties: Map<BluetoothGattCharacteristic, List<BleOperationFrag.CharacteristicProperty>> ?= mapOf()
 
+    var stmBytes:ByteArray?=null
+    var bytesIdx = 0
+    var myFlag = 0
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -93,6 +103,7 @@ class BleOperationFrag : Fragment() {
         characteristics = ConnectionManager.servicesOnDevice(device!!)?.flatMap { service ->
             service.characteristics ?: listOf()
         }
+
         binding.connectedDeviceName.text = device!!.name
 
         characteristicProperties = characteristics!!.map { characteristic ->
@@ -106,11 +117,10 @@ class BleOperationFrag : Fragment() {
                 }
             }.toList()
         }.toMap()
+
         services = ConnectionManager.servicesOnDevice(device!!)
         serviceAdapter = ServiceAdapter(services!!, ({service->println("services on click ${service}")}), ({characteristic->showCharacteristicOptions(characteristic)}))
         setupServices()
-
-
 
 //        binding.requestMtuButton.setOnClickListener {
 //            if (binding.mtuField.text.isNotEmpty() && binding.mtuField.text.isNotBlank()) {
@@ -124,12 +134,40 @@ class BleOperationFrag : Fragment() {
 //            mainActivity!!.hideKeyboard()
 //        }
 
-
         binding.disconnectionBtn.setOnClickListener {
             mainActivity!!.removeBleOperationLayout()
         }
 
+        binding.test.setOnClickListener {
+            val intent = Intent()
+                .setType("*/*")
+                .setAction(Intent.ACTION_GET_CONTENT)
+
+            startActivityForResult(Intent.createChooser(intent, "Select a file"), 111)
+        }
+
         return binding.root
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        when (requestCode) {
+            111 -> {
+                val contentResolver = mainActivity!!.applicationContext.contentResolver
+                val selectedFile = data?.data // The URI with the location of the file
+
+//                val myFile = File(selectedFile!!.path)
+//                var ins : InputStream = myFile.inputStream()
+//                var content = ins.readBytes().toString(Charset.defaultCharset())
+//                println(content)
+
+                // getBinaryContent(contentResolver, selectedFile!!)
+                contentResolver.openInputStream(selectedFile!!)?.use { inputStream ->
+                    stmBytes = inputStream.readBytes()
+//                    stmBytes = stmBytes!!.toUByteArray()
+                }
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -197,6 +235,30 @@ class BleOperationFrag : Fragment() {
         }
     }
 
+    private fun transmitSTMImage(characteristic: BluetoothGattCharacteristic) {
+        var bytes:ByteArray?=null
+        if (bytesIdx+244 < stmBytes!!.size){
+            bytes = stmBytes!!.copyOfRange(bytesIdx, bytesIdx+244)
+            bytesIdx+=244
+        } else {
+            bytes = stmBytes!!.copyOfRange(bytesIdx, stmBytes!!.size)
+            bytesIdx = stmBytes!!.size
+            myFlag = 1
+        }
+//        bytes = byteArrayOf(1,2,3,4,5,6,7,8,9,10,11,12,13)
+//        println("bytes : ${bytes}")
+        ConnectionManager.writeCharacteristic(device!!, characteristic, bytes)
+//        services?.forEach { service ->
+//            service.characteristics?.firstOrNull { characteristic ->
+//                characteristic.uuid == Uuid
+//            }?.let { matchingCharacteristic ->
+//                return
+//            }
+//        }
+
+
+    }
+
     private fun selector(
         title: CharSequence? = null,
         items: List<CharSequence>,
@@ -258,10 +320,17 @@ class BleOperationFrag : Fragment() {
 
             onCharacteristicRead = { _, characteristic ->
                 log("Read from ${characteristic.uuid}: ${characteristic.value.toHexString()}")
+//                if (characteristic.uuid )
             }
 
             onCharacteristicWrite = { _, characteristic ->
-                log("Wrote to ${characteristic.uuid}")
+                if (characteristic.uuid.toString().contains("43825502"))
+                {
+                }
+                else {
+                    log("Wrote to ${characteristic.uuid}")
+                }
+                // next gogo
             }
 
             onMtuChanged = { _, mtu ->
@@ -269,7 +338,35 @@ class BleOperationFrag : Fragment() {
             }
 
             onCharacteristicChanged = { _, characteristic ->
-                log("Value changed on ${characteristic.uuid}: ${characteristic.value.toHexString()}")
+                if (characteristic.uuid.toString().contains("43825501")) {
+//                    println("onCharacteristicChanged value : ${characteristic.value.toHexString().substring(0,4)}")
+//                    println("onCharacteristicChanged str : ${characteristic.value[4,].toString()}")
+                    when (characteristic.value[0].toInt()) {
+                        0x00 -> {
+                            println("!!======================")
+                            characteristic.value.contentToString()
+                            val stmVersion = String(characteristic.value.sliceArray(1..characteristic.value.size-1))
+                            log("STM version : ${stmVersion}")
+                        }
+                        0x02 -> {
+                            println("onCharacteristicChanged 0x02")
+                            if (myFlag==0) {
+                                transmitSTMImage(characteristic.service.getCharacteristic(UUID.fromString(TRANSMIT_STM_IMAGE_UUID)))
+                            } else {
+                                println("onCharacteristicChanged DONE")
+                                ConnectionManager.writeCharacteristic(device!!, characteristic, byteArrayOf(4))
+                                myFlag = 0
+                                bytesIdx = 0
+                            }
+                        }
+                        else -> {
+                            println("onCharacteristicChanged else : ${characteristic.value.toHexString()}")
+                        }
+                    }
+                }
+                else {
+                    log("Value changed on ${characteristic.uuid}: ${characteristic.value.toHexString()}")
+                }
             }
 
             onNotificationsEnabled = { _, characteristic ->
@@ -339,4 +436,23 @@ class BleOperationFrag : Fragment() {
                 }
             }
     }
+
+
+    // fun readFileLineByLineUsingForEachLine(fileName: String)
+    //         = File(fileName).forEachLine { println(it) }
+    // fun readFileAsLinesUsingUseLines(fileName: String): List<String>
+    //         = File(fileName).useLines { it.toList() }
+    // fun readFileAsLinesUsingBufferedReader(fileName: String): List<String>
+    //         = File(fileName).bufferedReader().readLines()
+    // fun readFileAsLinesUsingReadLines(fileName: String): List<String>
+    //         = File(fileName).readLines()
+    // fun readFileAsTextUsingInputStream(fileName: String)
+    //         = File(fileName).inputStream().readBytes().toString(Charsets.UTF_8)
+    // fun readFileDirectlyAsText(fileName: String): String
+    //         = File(fileName).readText(Charsets.UTF_8)
+    // fun readFileUsingGetResource(fileName: String)
+    //         = this::class.java.getResource(fileName).readText(Charsets.UTF_8)
+    // fun readFileAsLinesUsingGetResourceAsStream(fileName: String)
+    //         = this::class.java.getResourceAsStream(fileName).bufferedReader().readLines()
+
 }
